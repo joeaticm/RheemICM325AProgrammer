@@ -1,0 +1,96 @@
+    ********* BEGIN Write Manufacturing Info *********
+
+    // set nextBlock to start of memory area set aside for Manufacturing Info
+    nextBlock = INFO_START_BLOCK;
+
+    // FOR each byte in the Manufacturing Info array
+    for (multiBlockIndex = 0; multiBlockIndex < (MAX_RX_SIZE - 1); multiBlockIndex++)
+    {
+        // assign current byte to tx array
+        blockToWrite[singleBlockIndex] = g_Rx_Data[(multiBlockIndex + 1)];
+
+        // Increment byte counter
+        byteCounter++;
+
+        // IF byte counter == the length of a block (4) THEN
+        if (byteCounter == blockLength)
+        {
+            // DO
+            do
+            {
+                // call single block write function sending tx array as parameter
+                error = rfalNfcvPollerWriteSingleBlock(reqFlag, uid, nextBlock, blockToWrite, blockLength);
+
+// IF Debug output is On
+#if DEBUG_OUTPUT
+
+                // write results to console
+                platformLog(" Write Block: %s Data: %s\r\n", (error != ERR_NONE) ? "FAIL": "OK", hex2Str(blockToWrite, blockLength));
+
+//END IF
+#endif
+
+                // IF there was no error writing
+                if (error == 0)
+                {
+                        // set Transmit Success Sentinel to TRUE
+                        transmitSuccess = 1;
+
+                        // reset failure counter to 0
+                        failureCounter = 0;
+                        // IF Debug output is On
+#if DEBUG_OUTPUT
+
+                        // Transmit Success
+                        platformLog("Manufacturing Info Write Success\r\n");
+
+//END IF
+#endif
+
+                }
+
+                // ELSE IF there was an error reading and there have not been 10 consecutive errors
+                else if (failureCounter < MAX_FAILS)
+                {
+                    // increment failure counter
+                    failureCounter++;
+                }
+
+                // ELSE there have been too many failures
+                else
+                {
+                    // return Write Failure, abort rest of function early
+                    return WRITE_FAIL;
+                }
+                // END IF
+
+            }
+            // WHILE transmit success sentinel == false AND Failure Counter < 10
+            while ((transmitSuccess != 1) && failureCounter < MAX_FAILS);
+
+            // reset byte counter
+            byteCounter = 0;
+
+            // increment nextBlock by 1 to write next block
+            nextBlock++;
+        }
+        // END IF
+
+        // increment singleBlockIndex
+        singleBlockIndex++;
+
+        // IF we have loaded 4 blocks
+        if (singleBlockIndex == blockLength)
+        {
+            // reset singleBlockIndex to 0
+            singleBlockIndex = 0;
+        }
+        // END IF
+    }
+    // END FOR
+
+    // reset multiBlockIndex and singleBlockIndex to zero
+    multiBlockIndex = 0;
+    singleBlockIndex = 0;
+
+    ********* END Write Manufacturing Info *********

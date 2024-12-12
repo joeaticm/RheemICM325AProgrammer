@@ -1,0 +1,4 @@
+[filter "eclipse_env_hash"]
+	clean = sed 's/env-hash=\"[-,0-9]*\"/env-hash=\"-000000000000000000\"/g'
+	smudge = cat
+

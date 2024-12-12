@@ -1,0 +1,148 @@
+    // Capability Container (CC) File
+    static uint8_t payLoad_GoodCC[BLOCK_SIZE] =
+    {
+		0xE1,   // Magic Number, 0xE1 means we are using a 4 byte CC File instead of an 8 Byte CC File (0xE2)
+		0x40,   // Version & Access, 0x40 gives full access
+		0x40,   // size of T5T_AREA in octbytes (8 * this value is the # of bytes of the Type 5 Tag Area. 0x40 is the full chip)
+		0x00	// Additional features, none enabled
+    };
+
+    // placeholder NDEF message. Total item count must be a multiple of 4
+    static uint8_t payLoad_NdefMsg[MSG_SIZE] =
+    {
+        0x03,	// Tag Field, 0x03 represents an NDEF Message
+		0x64,	// Length Field, represents length of the Value Field (rest of the data besides TLV Terminator) in bytes, currently 98 Bytes
+
+        /* Begin Record 1 */
+
+		0x91,	// Record 1 Header Byte
+		0x01,	// Record 1 Type Length
+		0x38,	// Record 1 Payload Length
+		0x55,	// Record 1 Type "U" (Type U is a URI Type)
+
+		// Begin Record 1 Payload
+		0x00,	//  (NULL)
+		0x68,	// h
+		0x74,	// t
+		0x74,	// t
+		0x70,	// p
+		0x73,	// s
+		0x3a,	// :
+		0x2f,	// /
+		0x2f,	// /
+		0x61,	// a
+		0x70,	// p
+		0x70,	// p
+		0x73,	// s
+		0x2e,	// .
+		0x61,	// a
+		0x70,	// p
+		0x70,	// p
+		0x6c,	// l
+		0x65,	// e
+		0x2e,	// .
+		0x63,	// c
+		0x6f,	// o
+		0x6d,	// m
+		0x2f,	// /
+		0x75,	// u
+		0x73,	// s
+		0x2f,	// /
+		0x61,	// a
+		0x70,	// p
+		0x70,	// p
+		0x2f,	// /
+		0x69,	// i
+		0x63,	// c
+		0x6d,	// m
+		0x2d,	// -
+		0x63,	// c
+		0x6f,	// o
+		0x6e,	// n
+		0x74,	// t
+		0x72,	// r
+		0x6f,	// o
+		0x6c,	// l
+		0x73,	// s
+		0x2f,	// /
+		0x69,	// i
+		0x64,	// d
+		0x31,	// 1
+		0x34,	// 4
+		0x34,	// 4
+		0x30,	// 0
+		0x30,	// 0
+		0x36,	// 6
+		0x33,	// 3
+		0x33,	// 3
+		0x39,	// 9
+		0x30,	// 0
+		// End Record 1 Payload
+
+		/* End Record 1 */
+
+
+
+
+		/* Begin Record 2 */
+
+		0x5c,   // Record 2 Header Byte
+		0x0f,   // Record 2 Type Length
+		0x15,	// Record 2 Payload Length
+		0x00,	// Record 2 ID Length
+
+		// Begin Record 2 Type
+		0x61,	// a
+		0x6e,	// n
+		0x64,	// d
+		0x72,	// r
+		0x6f,	// o
+		0x69,	// i
+		0x64,	// d
+		0x2e,	// .
+		0x63,	// c
+		0x6f,	// o
+		0x6d,	// m
+		0x3a,	// :
+		0x70,	// p
+		0x6b,	// k
+		0x67,	// g
+		// End Record 2 Type
+
+		// Begin Record 2 Payload
+		0x63,	// c
+		0x6F,	// o
+		0x6D,	// m
+		0x2E,	// .
+		0x69,	// i
+		0x63,	// c
+		0x6D,	// m
+		0x63,	// c
+		0x6F,	// o
+		0x6E,	// n
+		0x74,	// t
+		0x72,	// r
+		0x6F,	// o
+		0x6C,	// l
+		0x73,	// s
+		0x2E,	// .
+		0x6E,	// n
+		0x66,	// f
+		0x63,	// c
+		0x2E,	// .
+		0x75,	// u
+
+		// End Record 2 Payload
+
+		/* End Record 2 */
+
+
+
+		/* Begin TLV Terminator */
+
+		0xFE,	// TLV Terminator, this represents the last byte of the last TLV and must be used if the entire T5T_Area is not being used
+		0x00,	// Filler used to write into unused register because writing must be done in 4 byte quantities.
+		0x00,	// Filler used to write into unused register because writing must be done in 4 byte quantities.
+
+		/* End TLV Terminator */
+        };
