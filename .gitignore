@@ -1,0 +1,6 @@
+.vs
+.vscode
+UI/bin/**
+UI/obj/**
+NUCLEO/FlashBin/**
+NUCLEO/.settings

@@ -53,8 +53,19 @@ extern "C" {					// DEFINE C++ Stuff
 /* ------------------------- Includes ------------------------- */
 #include "platform.h"
 
+typedef enum                // Current Command Code, used for Chip Initialization during Test Mode
+{
+	  NONE = 0x00 // No Command Code to process
+	, QUERY_CONFIG = '?' // Send version over UART
+	, PROGRAM = 'P' // Program bytes in program buffer.
+} CommandType;
 
+extern CommandType command;
+#define PROGRAM_LEN 16
+extern uint8_t program[PROGRAM_LEN];
 
+// Send bytes over UART.
+uint8_t logUsartTx(uint8_t *data, uint16_t dataLen);
 
 
 /* ------------------------- Exported Variables ------------------------- */

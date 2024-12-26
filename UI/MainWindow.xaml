@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RheemICM325AProgrammer"
         mc:Ignorable="d"
-        Title="Universal Head Pressure Control Configuration Tool" Height="450" Width="800" KeyDown="Window_KeyDown">
+        Title="Universal Head Pressure Control Configuration Tool" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -37,7 +37,7 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Margin="20">
-            <TextBlock x:Name="ProgramStatus" Text="PROGRAMMER" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <TextBlock x:Name="ProgramStatus" Text="PROGRAMMER" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="48" />
         </StackPanel>
 
     </Grid>

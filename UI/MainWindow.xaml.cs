@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO.Ports;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -21,10 +22,15 @@ namespace RheemICM325AProgrammer
         ICM325A? icm;
         bool programmer_running = false;
 
+        string barcode = "";
+        Regex icmBarcode = new Regex(@"^W?([0-9]{6})S([0-9]{10})10D([0-9]{4})$");
+        Regex rheemBarcode = new Regex(@"^W?([A-Z0-9]{4})(YB[0-9]{3})([A-Z0-9]{12})$");
+
         const string messageWaiting = "Scan a barcode to select configuration.";
         const string messageReady = "Press \"Program\" to write configuration to ICM325A.";
 
         const string messageIdle = "IDLE";
+        const string messageScanIcm = "SCAN ICM";
         const string messageRunning = "RUNNING";
         const string messagePass = "PASS";
         const string messageFail = "FAIL";
@@ -54,6 +60,7 @@ namespace RheemICM325AProgrammer
             Status.Text = messageReady;
             Program.Visibility = Visibility.Visible;
             ProgramStatus.Text = messageIdle;
+            ProgramStatus.Foreground = Brushes.Black;
             ProgramStatus.Visibility = Visibility.Visible;
 
             if (icm.ProbeType)
@@ -64,13 +71,43 @@ namespace RheemICM325AProgrammer
             {
                 ProbeType.Text = "Temperature";
             }
-            
+
             SetPoint.Text = $"{icm.SetPoint} psi";
             HardStart.Text = $"{icm.HardStart / 10.0:0.0} s";
             MinimumOutputVoltage.Text = $"{icm.MinimumOutputVoltage} %";
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private void SetProgram(string code)
+        {
+            if (code == "YB300")
+            {
+                ICM325A icm = new ICM325A();
+                icm.ProbeType = false;
+                icm.SetPoint = 400;
+                icm.HardStart = 40;
+                icm.MinimumOutputVoltage = 17;
+                AddICM(icm);
+            }
+        }
+
+        private async void WriteProgram()
+        {
+            bool result = await Task.Run(icm.Program);
+            if (result)
+            {
+                ProgramStatus.Text = messagePass;
+                ProgramStatus.Foreground = Brushes.Green;
+            }
+            else
+            {
+                ProgramStatus.Text = messageFail;
+                ProgramStatus.Foreground = Brushes.Red;
+            }
+            programmer_running = false;
+
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
             if (programmer_running)
             {
@@ -80,39 +117,40 @@ namespace RheemICM325AProgrammer
             if (icm != null)
             {
 
-                ProgramStatus.Text = messageRunning;
-                bool result = await Task.Run(icm.Program);
-                if (result)
-                {
-                    ProgramStatus.Text = messagePass;
-                }
-                else
-                {
-                    ProgramStatus.Text = messageFail;
-                }
-                programmer_running = false;
+                ProgramStatus.Text = messageScanIcm;
+                ProgramStatus.Foreground = Brushes.Black;
             }
         }
 
-        private void Window_KeyDown(object sender, KeyEventArgs e)
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.A)
+            if (Key.Return == e.Key)
             {
-                ICM325A icm = new ICM325A();
-                icm.ProbeType = true;
-                icm.SetPoint = 55;
-                icm.HardStart = 30;
-                icm.MinimumOutputVoltage = 40;
-                AddICM(icm);
+                if (icmBarcode.Match(barcode).Success)
+                {
+                    if (programmer_running)
+                    {
+                        WriteProgram();
+                    }
+                }
+                if (rheemBarcode.Match(barcode).Success)
+                {
+                    string program = rheemBarcode.Match(barcode).Groups[2].Value;
+                    SetProgram(program);
+                }
+
+                barcode = "";
             }
-            else if (e.Key == Key.B)
+            else
             {
-                ICM325A icm = new ICM325A();
-                icm.ProbeType = false;
-                icm.SetPoint = 400;
-                icm.HardStart = 40;
-                icm.MinimumOutputVoltage = 17;
-                AddICM(icm);
+                if (e.Key >= Key.A && e.Key <= Key.Z)
+                {
+                    barcode += e.Key;
+                }
+                if (e.Key >= Key.D0 && e.Key <= Key.D9)
+                {
+                    barcode += (int)e.Key - 34;
+                }
             }
         }
     }

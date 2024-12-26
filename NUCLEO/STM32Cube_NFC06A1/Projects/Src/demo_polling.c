@@ -79,13 +79,51 @@ static uint8_t ceNFCF_SENSF_RES[]  = {0x01,                                     
                                       0x00, 0x00 };                                               /* RD                                       */
 #endif /* RFAL_FEATURE_LISTEN_MODE */
 
+// Default Password
+static uint8_t payLoad_DEF_PWD[PWD_SIZE] =
+    {
+        0x00, //
+        0x00, //
+        0x00, //
+        0x00, //
+        0x00, //
+        0x00, //
+        0x00, //
+        0x00  //
+};
 
+// RF Config Password
+static uint8_t payLoad_RF_CONFIG_PWD[PWD_SIZE] =
+    {
+        'p',
+        'w',
+        'd',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5'};
 
+// Area 1 Config Password
+static uint8_t payLoad_RF_AREA_1_PWD[PWD_SIZE] =
+    {
+        'p',
+        'w',
+        'd',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5'};
 
+// Stores the data read back from the NFC chip so that it can be
+// compared to the program sent over UART.
+uint8_t written[PROGRAM_LEN];
 
 /* ------------------------- Private Function Prototypes ------------------------- */
 uint8_t tagFinder( void );
 static uint8_t deInitializer( rfalNfcvListenDevice *nfcvDev );
+static uint8_t writeConfiguration( rfalNfcvListenDevice *nfcvDev);
 static uint8_t factoryInitializer( rfalNfcvListenDevice *nfcvDev);
 static uint8_t processCommand( rfalNfcvListenDevice *nfcvDev );
 static uint8_t initializeTest( rfalNfcvListenDevice * nfcvDev );
@@ -507,29 +545,17 @@ uint8_t tagFinder( void )
 // BEGIN processCommand()
 static uint8_t processCommand( rfalNfcvListenDevice *nfcvDev )
 {
-    // constants
-    typedef enum                // Current Command Code, used for Chip Initialization during Test Mode
-    {
-          NONE        = 0x00    // no Command Code to process
-        , QUERY_CONFIG= '?'     // Send version over UART
-        , INIT_TEST   = 'A'     // Initiate Test Flag Command Code
-        , CHECK_REPLY     		// Check Reply Command Code
-        , FACT_INIT   			// Factory Initialization Command Code
-		, DE_INIT				// De-initialization Command Code, returns t
-    } command;
+
 
     // variables
-	command utf_Command;        // Command Code from UTF, index 0 of Rx_data
 	uint8_t error       = 0;	// container for error codes, 0 for no error
+
 
 
     /**************************************** BEGIN FUNCTION ****************************************/
 
-    // assign UTF Command
-    utf_Command = g_Rx_Data[0];
-
     //BEGIN SWITCH utf-command
-    switch (utf_Command)
+    switch (command)
     {
     	/*******************************************************************************/
         case NONE:
@@ -548,118 +574,42 @@ static uint8_t processCommand( rfalNfcvListenDevice *nfcvDev )
         // END CASE QUERY_CONFIG
 
         /*******************************************************************************/
-        // CASE Initialize Test
-        case INIT_TEST:
+        // CASE Program
+        case PROGRAM: ;
+        	uint8_t checksum = 0;
 
-        	// call Initialize Test to write Test Flag
-        	error = initializeTest( nfcvDev );
-
-            // Write acknowledgment to Console
-            DEBUG_LOG("Test Flag Write: ");
-
-            // Delay to allow UTF to Catch Up
-            platformDelay(1000);
-
-            if (error == 0){
-            // No errors, transmit Pass status to UTF
-                platformLog("PASS\n");
+            for (int i = 0; i < PROGRAM_LEN; i++)
+            {
+                checksum += program[i];
             }
 
-            else {
-            // Error detected, transmit Fail status to UTF
-                platformLog("FAIL\n");
+            if (checksum != 0)
+            {
+                platformLog("CHECKSUM_ERR\n");
             }
+            else
+            {
+                error = writeConfiguration(nfcvDev);
 
+                // Delay to allow UTF to Catch Up
+                platformDelay(1000);
 
-        break;
+                if (error == 0)
+                {
+                    // No errors, transmit Pass status to UTF
+                    platformLog("PASS\n");
+                }
+
+                else
+                {
+                    // Error detected, transmit Fail status to UTF
+                    platformLog("FAIL\n");
+                }
+            }
+            break;
         // END CASE Initialize Test
 
         /*******************************************************************************/
-
-        // CASE Check Reply to Test
-        case CHECK_REPLY:
-
-            // call Check Reply to Verify successful 2 way communication to NFC Chip
-        	error = checkReply( nfcvDev );
-
-            // Write acknowledgment to Console
-            DEBUG_LOG("Checking Reply: ");
-
-            // Delay to allow UTF to Catch Up
-            platformDelay(1000);
-
-            if (error == 0){
-            // No errors, transmit Pass status to UTF
-                platformLog("PASS\n");
-            }
-
-            else {
-            // Error detected, transmit Fail status to UTF
-                platformLog("FAIL\n");
-            }
-
-
-        break;
-        // END CASE Check Reply to Test
-
-        /*******************************************************************************/
-
-        // CASE Factory Initialization
-        case FACT_INIT:
-
-            // Call factoryInitializer to set up the NFC Chip
-        	error = factoryInitializer(nfcvDev);
-
-        	// Write acknowledgment to Console
-            DEBUG_LOG("Initializing to Factory Default: ");
-
-			// Delay to allow UTF to Catch Up
-			platformDelay(1000);
-
-            if (error == 0){
-            // No errors, transmit Pass status to UTF
-                platformLog("PASS\n");
-            }
-
-            else {
-            // Error detected, transmit Fail status to UTF
-                platformLog("FAIL\n");
-            }
-            // END IF
-
-
-        break;
-        // END CASE Factory Initialization
-
-        /*******************************************************************************/
-
-        // CASE De-Initialization
-        case DE_INIT :
-
-            // Call deInitializer to reset the NFC Chip
-        	error = deInitializer(nfcvDev);
-
-        	// Write acknowledgment to Console
-            DEBUG_LOG("Resetting to Manufacturer Default: ");
-
-			// Delay to allow UTF to Catch Up
-			platformDelay(1000);
-
-            if (error == 0){
-            // No errors, transmit Pass status to UTF
-                platformLog("PASS\n");
-            }
-
-            else {
-            // Error detected, transmit Fail status to UTF
-                platformLog("FAIL\n");
-            }
-
-        break;
-        // END CASE Factory Initialization
-
-        /*******************************************************************************/
-
         // DEFAULT CASE
         default:
             platformLog("FAIL, invalid serial command\n");
@@ -669,7 +619,7 @@ static uint8_t processCommand( rfalNfcvListenDevice *nfcvDev )
     //END SWITCH utf-Command
 
     // clear command code and Rx buffer
-    utf_Command = 0;
+    command = NONE;
     ST_MEMSET(g_Rx_Data, 0, MAX_RX_SIZE);
 
     // Return any error codes
@@ -976,7 +926,96 @@ static uint8_t checkReply( rfalNfcvListenDevice * nfcvDev )
 // END checkReply function
 
 
+// Write Configuration
+// Write the configuration file received over UART to the NFC.
+// Read it back and store it in 
+static uint8_t writeConfiguration( rfalNfcvListenDevice *nfcvDev )
+{
+    const uint8_t RF_PWD_0 = 0x00;
+    const uint8_t RF_PWD_1 = 0x01;
+    const uint8_t RFA1SS   = 0x04;
+    const uint8_t WRT_LOCK = 0x05;
 
+    ReturnCode  error;
+    uint8_t     nextBlock;
+    uint8_t     *uid;
+    uint8_t     reqFlag;
+    uint8_t     blockLength;
+    uint8_t     blockToWrite[BLOCK_SIZE];
+    uint8_t     blockRead[BLOCK_SIZE];
+    uint8_t     byteCounter = 0;
+    uint8_t     failureCounter = 0;
+    uint8_t     multiBlockIndex = 0;
+    uint8_t     singleBlockIndex = 0;
+    uint16_t    rcvLen;
+
+    nextBlock = RECIPE_START_BLOCK + 1;
+    uid = nfcvDev->InvRes.UID;
+    reqFlag = RFAL_NFCV_REQ_FLAG_DEFAULT;
+    blockLength = BLOCK_SIZE;
+    nextBlock = RECIPE_START_BLOCK + 1;
+
+    for (multiBlockIndex = 0; multiBlockIndex < (sizeof(program)); multiBlockIndex++)
+    {
+        blockToWrite[singleBlockIndex] = program[multiBlockIndex];
+        byteCounter++;
+
+        if (byteCounter == blockLength)
+        {
+            do
+            {
+                error = rfalST25xVPollerPresentPassword(reqFlag, uid, RF_PWD_1, payLoad_RF_AREA_1_PWD, sizeof(payLoad_RF_AREA_1_PWD));
+                DEBUG_LOG("Present Password: %s\r\n", (error != ERR_NONE) ? "FAIL" : "OK");
+
+                if (error == 0)
+                {
+                    error = rfalNfcvPollerWriteSingleBlock(reqFlag, uid, nextBlock, blockToWrite, blockLength);
+                    DEBUG_LOG("Write Block %d: %s\r\n", nextBlock, (error != ERR_NONE) ? "FAIL" : "OK");
+                }
+
+                if (error == 0)
+                {
+                    failureCounter = 0;
+                }
+                else if (failureCounter <= MAX_FAILS)
+                {
+                    failureCounter++;
+                    platformDelay(1000);
+                }
+                else
+                {
+                    return WRITE_FAIL;
+                }
+            }
+            while (error != 0 && failureCounter <= MAX_FAILS);
+
+            byteCounter = 0;
+            failureCounter = 0;
+            nextBlock++;
+        }
+
+        singleBlockIndex++;
+        if (singleBlockIndex == blockLength)
+        {
+            singleBlockIndex = 0;
+        }
+    }
+
+    nextBlock = RECIPE_START_BLOCK + 1;
+    for (multiBlockIndex = 0; multiBlockIndex < (sizeof(program)); multiBlockIndex += blockLength)
+    {
+        error = rfalNfcvPollerReadSingleBlock(reqFlag, uid, nextBlock, blockRead, sizeof(blockRead), &rcvLen);
+        if (error != 0 || rcvLen != blockLength || memcmp(&program[multiBlockIndex], blockRead, blockLength) != 0)
+        {
+            DEBUG_LOG("Verification Failed Block %d\r\n", nextBlock);
+            return WRITE_FAIL;
+        }
+        DEBUG_LOG("Verification Success Block %d\r\n", nextBlock);
+        nextBlock++;
+    }
+
+    return WRITE_PASS;
+}
 
 
 /****************************************************************************
@@ -1133,44 +1172,6 @@ static uint8_t factoryInitializer( rfalNfcvListenDevice *nfcvDev )
 
 
 
-    // Default Password
-    static uint8_t payLoad_DEF_PWD[PWD_SIZE] =
-	{
-		0x00,      //
-		0x00,      //
-		0x00,      //
-		0x00,      //
-		0x00,      //
-		0x00,      //
-		0x00,      //
-		0x00       //
-	};
-
-    // RF Config Password
-    static uint8_t payLoad_RF_CONFIG_PWD[PWD_SIZE] =
-	{
-		'p',
-		'w',
-		'd',
-		'1',
-		'2',
-		'3',
-		'4',
-		'5'
-	};
-
-    // Area 1 Config Password
-    static uint8_t payLoad_RF_AREA_1_PWD[PWD_SIZE] =
-	{
-		'p',
-		'w',
-		'd',
-		'1',
-		'2',
-		'3',
-		'4',
-		'5'
-	};
 
     // De-virginized Marker
     static uint8_t payLoad_Factory_Stamp[BLOCK_SIZE] = FACTORY_STAMP;

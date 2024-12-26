@@ -22,6 +22,7 @@
 #include "logger.h"
 #include "st_errno.h"
 #include "demo.h"
+#include "utils.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -58,9 +59,9 @@ uint8_t g_Rx_Data[ MAX_RX_SIZE ];	// placeholder Manufacturing Info Array, Total
 uint8_t g_bMsgReceived = 0;			// boolean flag used to signal when a message has been transmitted to the unit
 UART_HandleTypeDef *pLogUsart;      /*!< pointer to the logger Handler */
 
-
-
-
+// constants
+CommandType command = 0;
+uint8_t program[PROGRAM_LEN]; // Bytes of the configuration that will be written to ICM325A.
 
 /* ------------------------- Private Function Prototypes ------------------------- */
 uint8_t logUsartTx(uint8_t *data, uint16_t dataLen);	// initializes the UART handle and UART IP
@@ -307,8 +308,47 @@ void init_UART_RX()
 // BEGIN HAL_UART_RxCpltCallback
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *husart)
 {
-	// set msg received flag to true
-	g_bMsgReceived = 1;
+	static int reading_program = 0;
+	static int bytes_read = 0;
+
+	uint8_t read = g_Rx_Data[0];
+
+
+	if (!reading_program)
+	{
+		if (read == '?')
+		{
+			// Query command
+			g_bMsgReceived = 1;
+			command = QUERY_CONFIG;
+		}
+		else if (read == 'P')
+		{
+			// Program command
+			// Begin reading bytes of command
+			reading_program = 1;
+			bytes_read = 0;
+		}
+		else
+		{
+			// Ignore other commands
+		}
+	}
+	else
+	{
+		g_bMsgReceived = 1;
+		program[bytes_read] = read;
+		bytes_read++;
+		// Clear buffer so that it's ready for next byte.
+		ST_MEMSET(g_Rx_Data, 0, MAX_RX_SIZE);
+
+		if (bytes_read == PROGRAM_LEN)
+		{
+			// Program has been read. Send it to NFC.
+			command = PROGRAM;
+			reading_program = 0;
+		}
+	}
 
 	// call function to re-enable UART Rx Interrupts
 	HAL_UART_Receive_IT(pLogUsart, g_Rx_Data, MAX_RX_SIZE);
