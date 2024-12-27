@@ -13,6 +13,8 @@ namespace RheemICM325AProgrammer
 {
     public class ICM325A
     {
+        // Model String
+        public string Model { get; set; }
         // False - Temperature True - Pressure
         public bool ProbeType { get; set; }
         // 50-500
@@ -23,6 +25,18 @@ namespace RheemICM325AProgrammer
         public byte MinimumOutputVoltage { get; set; }
 
         const byte FUNCTION_ID = 201;
+
+        public bool IsValidModel()
+        {
+            bool probeValid = (ProbeType == false && SetPoint >= 70 && SetPoint <= 140) ||
+                (ProbeType == true && SetPoint >= 50 && SetPoint <= 500);
+
+            return
+                probeValid
+                 &&
+                   HardStart >= 1 && HardStart <= 50 &&
+                   MinimumOutputVoltage >= 17 && MinimumOutputVoltage <= 48;
+        }
 
         public byte[] GetProgram()
         {
@@ -41,39 +55,56 @@ namespace RheemICM325AProgrammer
 
             return program;
         }
-        public bool Program()
+        public string Program()
         {
-            string port;
+            string? port;
 
             using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Caption like '%(COM%'"))
             {
                 var portNames = SerialPort.GetPortNames();
                 var ports = searcher.Get().Cast<ManagementBaseObject>().ToList().Select(p => p["Caption"].ToString());
-                port = portNames.First(port => ports.First(s => s != null && s.Contains(port)).Contains("STMicroelectronics STLink Virtual COM Port"));
+                if (ports == null)
+                {
+                    return "ICM325A NFC Programmer not found.";
+                }
+                port = portNames.FirstOrDefault(port => ports.First(s => s != null && s.Contains(port)).Contains("STMicroelectronics STLink Virtual COM Port"));
+            }
+
+            if (port == null)
+            {
+                return "ICM325A NFC Programmer not found.";
             }
 
             byte[] program = GetProgram();
 
-            SerialPort serialPort = new SerialPort
+            try
             {
-                PortName = port,
-                BaudRate = 19200,
-            };
-            serialPort.Open();
-            serialPort.Write("P");
-            for (int i = 0; i < 16; i++)
-            {
-                serialPort.Write(program, i, 1);
+                SerialPort serialPort = new SerialPort
+                {
+                    PortName = port,
+                    BaudRate = 19200,
+                };
+
+                serialPort.Open();
+                serialPort.Write("P");
+                for (int i = 0; i < 16; i++)
+                {
+                    serialPort.Write(program, i, 1);
+                }
+                string result = serialPort.ReadLine();
+                serialPort.Close();
+                if (result == "PASS")
+                {
+                    return "PASS";
+                }
+                else
+                {
+                    return "Failed to write configuration to ICM325A.";
+                }
             }
-            string result = serialPort.ReadLine();
-            serialPort.Close();
-            if (result == "PASS")
+            catch (Exception)
             {
-                return true;
-            }
-            else
-            {
-                return false;
+                return "Communication error.";
             }
         }
 

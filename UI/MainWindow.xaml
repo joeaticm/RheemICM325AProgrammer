@@ -6,39 +6,47 @@
         xmlns:local="clr-namespace:RheemICM325AProgrammer"
         mc:Ignorable="d"
         Title="Universal Head Pressure Control Configuration Tool" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="3*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
 
-        <StackPanel Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="20">
-            <TextBlock x:Name="Status" Text="STATUS" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
-        </StackPanel>
+    <StackPanel>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_Configure" Click="ConfigureButton_Click"/>
+            </Menu>
+        </DockPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
 
-        <StackPanel Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" Margin="20">
-            <Button x:Name="Program" Content="Program" Click="Button_Click"/>
-        </StackPanel>
+            <StackPanel Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Margin="20">
+                <TextBlock x:Name="Status" Text="STATUS" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
 
-        <StackPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Margin="20">
-            <TextBlock Text="Universal Head Pressure Control Info" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
-            <TextBlock Text="Probe Type:"/>
-            <TextBlock x:Name="ProbeType" FontWeight="Bold"/>
-            <TextBlock Text="Set Point:"/>
-            <TextBlock x:Name="SetPoint" FontWeight="Bold"/>
-            <TextBlock Text="Hard Start"/>
-            <TextBlock x:Name="HardStart" FontWeight="Bold"/>
-            <TextBlock Text="Minimum Output Voltage"/>
-            <TextBlock x:Name="MinimumOutputVoltage" FontWeight="Bold"/>
-        </StackPanel>
+            <StackPanel Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" Margin="20">
+                <Button x:Name="Program" Content="Program" Click="ProgramButton_Click"/>
+            </StackPanel>
 
-        <StackPanel Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Margin="20">
-            <TextBlock x:Name="ProgramStatus" Text="PROGRAMMER" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="48" />
-        </StackPanel>
+            <StackPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Margin="20">
+                <TextBlock x:Name="Title" Text="Universal Head Pressure Control Info" FontSize="16" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="Probe Type:"/>
+                <TextBlock x:Name="ProbeType" FontWeight="Bold"/>
+                <TextBlock Text="Set Point:"/>
+                <TextBlock x:Name="SetPoint" FontWeight="Bold"/>
+                <TextBlock Text="Hard Start"/>
+                <TextBlock x:Name="HardStart" FontWeight="Bold"/>
+                <TextBlock Text="Minimum Output Voltage"/>
+                <TextBlock x:Name="MinimumOutputVoltage" FontWeight="Bold"/>
+            </StackPanel>
 
-    </Grid>
+            <StackPanel Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Margin="20">
+                <TextBlock x:Name="ProgramStatus" Text="PROGRAMMER" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="48" />
+            </StackPanel>
+
+        </Grid>
+    </StackPanel>
 </Window>

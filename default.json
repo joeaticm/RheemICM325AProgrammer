@@ -1,0 +1,27 @@
+{
+  "OutputDirectory": ".",
+  "CheckBarcode": true,
+  "Models": [
+    {
+      "Model": "YB180",
+      "ProbeType": "temperature",
+      "SetPoint": 128,
+      "HardStart": 50,
+      "MinimumOutputVoltage": 17
+    },
+    {
+      "Model": "YB240",
+      "ProbeType": "temperature",
+      "SetPoint": 123,
+      "HardStart": 50,
+      "MinimumOutputVoltage": 17
+    },
+    {
+      "Model": "YB300",
+      "ProbeType": "temperature",
+      "SetPoint": 115,
+      "HardStart": 50,
+      "MinimumOutputVoltage": 18
+    }
+  ]
+}
