@@ -20,6 +20,7 @@ namespace RheemICM325AProgrammer
 {
     public enum MainWindowState
     {
+        UNCONFIGURED,
         IDLE,
         PROGRAM_SELECTED,
         PROGRAM_STARTED,
@@ -32,14 +33,15 @@ namespace RheemICM325AProgrammer
     public partial class MainWindow : Window
     {
         ICM325A? icm;
-        MainWindowState state = MainWindowState.IDLE;
+        MainWindowState state = MainWindowState.UNCONFIGURED;
 
         string barcode = "";
         Regex icmBarcode = new Regex(@"^W?([0-9]{6})S([0-9]{10})10D([0-9]{4})$");
         Regex rheemBarcode = new Regex(@"^W?([A-Z0-9]{4})(YB[0-9]{3})([A-Z0-9]{12})$");
 
-        const string messageWaiting = "Scan a barcode to select configuration.";
-        const string messageReady = "Press \"Program\" to write configuration to ICM325A.";
+        const string messageUnconfigured = "Load a configuration file to start programming.";
+        const string messageWaiting = "Scan a barcode to select program.";
+        const string messageReady = "Press \"Program\" to write program to ICM325A.";
 
         const string messageIdle = "IDLE";
         const string messageScanIcm = "SCAN ICM";
@@ -52,6 +54,7 @@ namespace RheemICM325AProgrammer
         Configuration configuration = new Configuration
         {
             OutputDirectory = ".",
+            CheckBarcode = true,
             Models = [
                     new ICM325A {
                         Model = "YB180",
@@ -81,7 +84,7 @@ namespace RheemICM325AProgrammer
         {
             InitializeComponent();
             RemoveICM();
-            Status.Text = messageWaiting;
+            Status.Text = messageUnconfigured;
         }
 
         private void RemoveICM()
@@ -226,7 +229,7 @@ namespace RheemICM325AProgrammer
                 }
 
                 config.Models = models;
-                Status.Text = "Successfully loaded configuration. Scan a barcode to select configuration.";
+                Status.Text = "Successfully loaded configuration. Scan a barcode to select program.";
                 return config;
             }
             catch (IOException)
@@ -275,7 +278,7 @@ namespace RheemICM325AProgrammer
 
         private void ConfigureButton_Click(object sender, RoutedEventArgs e)
         {
-            if (state != MainWindowState.IDLE && state != MainWindowState.PROGRAM_SELECTED)
+            if (state != MainWindowState.UNCONFIGURED && state != MainWindowState.IDLE && state != MainWindowState.PROGRAM_SELECTED)
             {
                 return;
             }
